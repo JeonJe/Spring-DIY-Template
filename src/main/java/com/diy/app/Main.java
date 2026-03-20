@@ -2,6 +2,7 @@ package com.diy.app;
 
 import com.diy.app.servlet.HomeServlet;
 import com.diy.app.servlet.LectureServlet;
+import com.diy.framework.web.server.TomcatWebServer;
 import org.apache.catalina.Context;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.startup.Tomcat;
@@ -15,6 +16,9 @@ import java.security.CodeSource;
 
 public class Main {
     public static void main(String[] args) {
+
+        //todo 이걸로 사용
+        TomcatWebServer tomcatWebServer = new TomcatWebServer();
 
         Tomcat tomcat = new Tomcat();
         tomcat.setPort(8085);
