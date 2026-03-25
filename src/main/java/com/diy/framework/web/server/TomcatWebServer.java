@@ -1,5 +1,7 @@
 package com.diy.framework.web.server;
 
+import com.diy.framework.web.controller.Controller;
+import com.diy.framework.web.controller.DispatcherServlet;
 import org.apache.catalina.Context;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.startup.Tomcat;
@@ -10,12 +12,19 @@ import java.io.File;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.security.CodeSource;
+import java.util.Map;
 
 
 public class TomcatWebServer {
 
     private final Tomcat tomcat = new Tomcat();
     private final int port = 8085;
+
+    private final Map<String, Controller> controllerMap;
+
+    public TomcatWebServer(Map<String, Controller> controllerMap) {
+        this.controllerMap = controllerMap;
+    }
 
     public void start() {
         setServerContext();
@@ -39,6 +48,11 @@ public class TomcatWebServer {
         final String absoluteResourcesPath = new File(resourcesPath).getAbsolutePath();
 
         final Context context = this.tomcat.addWebapp("/", absoluteResourcesPath);
+
+        //디스패처 서블릿 추가
+        DispatcherServlet dispatcherServlet = new DispatcherServlet(controllerMap);
+        Tomcat.addServlet((context), "dispatcherServlet", dispatcherServlet);
+        context.addServletMappingDecoded("/", "dispatcherServlet");
 
         setServerResources(context);
     }

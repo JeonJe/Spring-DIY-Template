@@ -1,6 +1,7 @@
 package com.diy.app.controller;
 
 import com.diy.app.domain.Lecture;
+import com.diy.app.service.LectureService;
 import com.diy.framework.web.controller.Controller;
 import com.diy.framework.web.model.Model;
 import com.diy.framework.web.view.ModelAndView;
@@ -22,7 +23,11 @@ public class LectureController implements Controller {
     public static final String PUT = "PUT";
     public static final String POST = "POST";
     public static final String GET = "GET";
-    private final Map<Long, Lecture> lectureRepository = new HashMap<>();
+    private final LectureService lectureService;
+
+    public LectureController(LectureService lectureService) {
+        this.lectureService = lectureService;
+    }
 
     @Override
     public ModelAndView handleRequest(HttpServletRequest request, HttpServletResponse response) throws Exception {
@@ -47,13 +52,10 @@ public class LectureController implements Controller {
 
     @NotNull
     private ModelAndView doGet() {
-        final Collection<Lecture> lectures = lectureRepository.values();
+        Collection<Lecture> lectures = lectureService.findAll();
 
         Model model = new Model();
         model.addAttribute("lectures", lectures);
-
-//            final JspView jspView = new JspView("lecture-list.jsp");
-//            jspView.render(model, request, response);
         return new ModelAndView("lecture-list", model);
     }
 
@@ -62,42 +64,21 @@ public class LectureController implements Controller {
     private ModelAndView doPost(HttpServletRequest request) throws IOException {
         Lecture lecture = extractLecture(request);
 
-        final long id = lectureRepository.size();
-        lecture.setId(id);
-        lectureRepository.put(id, lecture);
+        lectureService.save(lecture);
         return null;
     }
 
     @Nullable
     private ModelAndView doDelete(HttpServletRequest request) throws IOException {
         Lecture lecture = extractLecture(request);
-        if (lecture == null || lecture.getId() == null) {
-            throw new IllegalArgumentException("lecture is null or seq is null");
-        }
-
-        Lecture target = lectureRepository.get(lecture.getId());
-        if (target == null) {
-            throw new NoSuchElementException("No such element");
-        }
-
-        lectureRepository.remove(lecture.getId());
+        lectureService.delete(lecture.getId());
         return null;
     }
 
     @Nullable
     private ModelAndView doPut(HttpServletRequest request) throws IOException {
         Lecture lecture = extractLecture(request);
-
-        if (lecture == null || lecture.getId() == null) {
-            throw new IllegalArgumentException("lecture is null or seq is null");
-        }
-
-        Lecture target = lectureRepository.get(lecture.getId());
-        if (target == null) {
-            throw new NoSuchElementException("No such element");
-        }
-
-        lectureRepository.put(lecture.getId(), lecture);
+        lectureService.update(lecture);
         return null;
     }
 
