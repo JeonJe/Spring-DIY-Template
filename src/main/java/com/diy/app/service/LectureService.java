@@ -2,6 +2,7 @@ package com.diy.app.service;
 
 import com.diy.app.domain.Lecture;
 import com.diy.app.repository.LectureRepository;
+import com.diy.framework.annotation.Autowired;
 
 import java.util.Collection;
 import java.util.NoSuchElementException;
@@ -9,6 +10,7 @@ import java.util.NoSuchElementException;
 public class LectureService {
     private final LectureRepository lectureRepository;
 
+    @Autowired
     public LectureService(LectureRepository lectureRepository) {
         this.lectureRepository = lectureRepository;
     }
