@@ -1,11 +1,14 @@
 package com.diy.app.repository;
 
 import com.diy.app.domain.Lecture;
+import com.diy.framework.annotation.Component;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+
+@Component
 public class LectureRepository {
 
     private final Map<Long, Lecture> repository = new HashMap<>();

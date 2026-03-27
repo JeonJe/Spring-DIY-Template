@@ -3,16 +3,39 @@ package com.diy.app;
 import com.diy.app.controller.LectureController;
 import com.diy.app.repository.LectureRepository;
 import com.diy.app.service.LectureService;
+import com.diy.framework.annotation.Component;
+import com.diy.framework.beans.factory.BeanScanner;
 import com.diy.framework.web.controller.Controller;
 import com.diy.framework.web.server.TomcatWebServer;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
 
-        LectureRepository lectureRepository = new LectureRepository();
+        LectureRepository lectureRepository = null;
+
+        //빈 스캐너에서 lecture repository 하위 클래스를 찾는다
+        BeanScanner beanScanner = new BeanScanner("com.diy.app.repository");
+        Set<Class<?>> classes = beanScanner.scanClassesTypeAnnotatedWith(Component.class);
+        for (Class<?> aClass : classes) {
+
+            //instance = com.diy.app.repository.LectureRepository@277c0f21
+            Object instance = aClass.getDeclaredConstructor().newInstance();
+            if (instance instanceof LectureRepository) {
+                lectureRepository = (LectureRepository) instance;
+
+            }
+
+        }
+
+        // 이 클래스의 인스턴스를 런타임에서 생성한다.
+
+
         LectureService lectureService = new LectureService(lectureRepository);
         LectureController lectureController = new LectureController(lectureService);
 
