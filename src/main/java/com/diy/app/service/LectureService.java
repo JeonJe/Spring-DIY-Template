@@ -3,10 +3,12 @@ package com.diy.app.service;
 import com.diy.app.domain.Lecture;
 import com.diy.app.repository.LectureRepository;
 import com.diy.framework.annotation.Autowired;
+import com.diy.framework.annotation.Component;
 
 import java.util.Collection;
 import java.util.NoSuchElementException;
 
+@Component
 public class LectureService {
     private final LectureRepository lectureRepository;
 

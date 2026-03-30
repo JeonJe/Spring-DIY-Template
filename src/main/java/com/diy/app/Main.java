@@ -22,7 +22,7 @@ public class Main {
         LectureService lectureService = null;
 
         //빈 스캐너에서 lecture repository 하위 클래스를 찾는다
-        BeanScanner beanScanner = new BeanScanner("com.diy.app.repository");
+        BeanScanner beanScanner = new BeanScanner("com.diy.app");
         Set<Class<?>> classes = beanScanner.scanClassesTypeAnnotatedWith(Component.class);
         lectureRepository = getLectureRepository(classes, lectureRepository);
         lectureService = getLectureService(classes, lectureRepository);
