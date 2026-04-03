@@ -1,34 +1,34 @@
 package com.diy.framework.beans.factory;
 
-import com.diy.framework.annotation.Autowired;
-
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class BeanFactory {
-
 
     //빈등록
     private final Set<Class<?>> beanClasses = new HashSet<>();
 
-    //객체 저장소
+    //객체 저장소 (타입 기반)
     private final Map<Class<?>, Object> beanInstances = new HashMap<>();
+    private final Map<String, Object> beanByName = new HashMap<>();
+
+
+    private final List<BeanCreationStrategy> strategies = List.of(
+            new BeanMethodCreationStrategy(), //빈이 우선?
+            new ComponentCreationStrategy()
+    );
 
     public BeanFactory() {
     }
 
-    public <T> T getBean(Class<T> beanClass) throws InvocationTargetException, InstantiationException, IllegalAccessException {
+    public <T> T getBean(Class<T> beanClass) {
         if (beanClass == null) {
             throw new NullPointerException("beanClass is null");
         }
 
-        if(beanClass.isInterface()) {
+        //구현체 만들기
+        if (beanClass.isInterface()) {
             for (Class<?> aClass : beanClasses) {
-                if(beanClass.isAssignableFrom(aClass)) {
+                if (beanClass.isAssignableFrom(aClass)) {
                     beanClass = (Class<T>) aClass;
                     break;
                 }
@@ -36,51 +36,34 @@ public class BeanFactory {
         }
 
         //객체 있음?
-        Object beanInstance = beanInstances.get(beanClass);
-        if (beanInstance != null) {
-            return (T) beanInstance;
+        if (beanInstances.containsKey(beanClass)) {
+            return (T) beanInstances.get(beanClass);
         }
-        //생성자 선택
-        Constructor<?>[] constructors = beanClass.getDeclaredConstructors();
 
-        Constructor<?> selected = null;
-
-
-        for (Constructor<?> constructor : constructors) {
-            //autowired있으면 그거 씀
-            if (constructor.isAnnotationPresent(Autowired.class)) {
-                constructor.setAccessible(true);
-                selected = constructor;
+        try {
+            //@Bean 없으면 @Component ??
+            for (BeanCreationStrategy strategy : strategies) {
+                if (strategy.supports(beanClass, this)) {
+                    Object newInstance = strategy.createBean(beanClass, this);
+                    beanInstances.put(beanClass, newInstance);
+                    return (T) newInstance;
+                }
             }
+            throw new RuntimeException("빈 생성 전략을 찾을 수 없습니다: " + beanClass.getName());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
+    }
 
-
-        if (selected == null) {
-            selected = constructors[0];
-        }
-
-        //생성자들의 파라미터도 만들어줘야함
-        Class<?>[] parameterTypes = selected.getParameterTypes();
-        Object[] args = new Object[parameterTypes.length];
-
-        for (int i = 0; i < parameterTypes.length; i++) {
-            args[i] = getBean(parameterTypes[i]);
-        }
-
-        //인스턴스 생성
-        Object newInstance = selected.newInstance(args);
-
-        //만들어진 객체 저장
-        beanInstances.put(beanClass, newInstance);
-
-        return (T) newInstance;
-
-
+    public <T> T getBean(String name) {
+        return (T) beanByName.get(name);
     }
 
     public void registerBean(Class<?> beanClass) {
         beanClasses.add(beanClass);
     }
 
-
+    public Set<Class<?>> getBeanClasses() {
+        return Collections.unmodifiableSet(beanClasses);
+    }
 }
