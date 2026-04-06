@@ -10,7 +10,7 @@ public class BeanMethodCreationStrategy implements BeanCreationStrategy {
     }
 
     @Override
-    public Object createBean(BeanDefinition beanefinition, BeanFactory beanFactory) throws Exception {
+    public Object createBean(BeanDefinition beanDefinition, BeanFactory beanFactory) throws Exception {
         //어떤 메소드로 빈을 만들건지 꺼냄
         Method factoryMethod = beanDefinition.getFactoryMethod();
         Object configInstance = beanFactory.getBean(beanDefinition.getDeclaringClass());

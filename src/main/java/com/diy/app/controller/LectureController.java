@@ -3,6 +3,7 @@ package com.diy.app.controller;
 import com.diy.app.domain.Lecture;
 import com.diy.app.service.LectureService;
 import com.diy.framework.annotation.Component;
+import com.diy.framework.annotation.RequestMapping;
 import com.diy.framework.web.controller.Controller;
 import com.diy.framework.web.model.Model;
 import com.diy.framework.web.view.ModelAndView;
@@ -20,6 +21,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 @Component
+@RequestMapping("/lectures")
 public class LectureController implements Controller {
     public static final String DELETE = "DELETE";
     public static final String PUT = "PUT";
