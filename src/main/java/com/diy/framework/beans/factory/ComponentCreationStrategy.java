@@ -7,12 +7,13 @@ import java.lang.reflect.Constructor;
 public class ComponentCreationStrategy implements BeanCreationStrategy {
 
     @Override
-    public boolean supports(Class<?> beanClass, BeanFactory beanFactory) {
-        return true;
+    public boolean supports(BeanDefinition beanDefinition) {
+        return !beanDefinition.isFactoryMethodBean();
     }
 
     @Override
-    public Object createBean(Class<?> beanClass, BeanFactory beanFactory) throws Exception {
+    public Object createBean(BeanDefinition beanDefinition, BeanFactory beanFactory) throws Exception {
+        Class<?> beanClass = beanDefinition.getBeanType();
         if (beanClass == null) {
             throw new NullPointerException("beanClass is null");
         }
@@ -32,6 +33,7 @@ public class ComponentCreationStrategy implements BeanCreationStrategy {
         if (selected == null) {
             selected = constructors[0];
         }
+        selected.setAccessible(true);
 
         //생성자들의 파라미터도 만들어줘야함
         Class<?>[] parameterTypes = selected.getParameterTypes();
