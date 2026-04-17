@@ -13,7 +13,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 
 
-@Component
+//@Component
+@Controller
 @RequestMapping("/lectures")
 public class LectureController {
 

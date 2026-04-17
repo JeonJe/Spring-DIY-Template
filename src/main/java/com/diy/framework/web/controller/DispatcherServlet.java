@@ -14,9 +14,12 @@ import java.util.Map;
 
 //@WebServlet("/") // 톰캣이 자동으로 인스턴스 생성, 외부 파라미터 주입 불가 함
 public class DispatcherServlet extends HttpServlet {
-    private final Map<String, ControllerAndMethodMapping> controllerMap;
+    private final Map<String, ControllerAndMethodMapping> controllerAndMethodMap;
+    private final Map<String, Controller> controllerMap;
 
-    public DispatcherServlet(Map<String, ControllerAndMethodMapping> controllerMap) {
+    public DispatcherServlet(Map<String, ControllerAndMethodMapping> controllerAndMethodMap,
+                             Map<String, Controller> controllerMap) {
+        this.controllerAndMethodMap = controllerAndMethodMap;
         this.controllerMap = controllerMap;
     }
 
@@ -37,19 +40,29 @@ public class DispatcherServlet extends HttpServlet {
     protected void service(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
 
         String methodAndURL = buildKey(req);
-        ControllerAndMethodMapping controllerAndMethodMapping = controllerMap.get(methodAndURL);
-        if (controllerAndMethodMapping == null) {         //favicon.icon가 옴
-            resp.sendError(404);
-            return;
-        }
+        ControllerAndMethodMapping controllerAndMethodMapping = controllerAndMethodMap.get(methodAndURL);
 
         try {
-            Object result = controllerAndMethodMapping.invoke(req, resp);
-
-            if (result instanceof ModelAndView) {
-                render(req, resp, (ModelAndView) result);
+            if (controllerAndMethodMapping != null) {
+                // 애너테이션 기반 컨트롤러
+                Object result = controllerAndMethodMapping.invoke(req, resp);
+                if (result instanceof ModelAndView) {
+                    render(req, resp, (ModelAndView) result);
+                }
+                return;
             }
 
+            // 인터페이스 기반 컨트롤러
+            Controller controller = controllerMap.get(req.getRequestURI());
+            if (controller != null) {
+                ModelAndView modelAndView = controller.handleRequest(req, resp);
+                if (modelAndView != null) {
+                    render(req, resp, modelAndView);
+                }
+                return;
+            }
+
+            resp.sendError(404);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

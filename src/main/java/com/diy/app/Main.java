@@ -25,7 +25,8 @@ public class Main {
         classes.forEach(beanFactory::registerBeanDefinitions);
 
         Map<String, ControllerAndMethodMapping> controllerAndMethodMappingMap = createControllerAndMethodMappingMap(beanFactory, classes);
-        DispatcherServlet dispatcherServlet = new DispatcherServlet(controllerAndMethodMappingMap);
+        Map<String, Controller> controllerMap = createControllerMap(beanFactory, classes);
+        DispatcherServlet dispatcherServlet = new DispatcherServlet(controllerAndMethodMappingMap, controllerMap);
 
         TomcatWebServer tomcatWebServer = new TomcatWebServer(dispatcherServlet);
         tomcatWebServer.start();
@@ -39,30 +40,30 @@ public class Main {
                 continue;
             }
             String requestUrl = requestMapping.value();
-            Controller controller = (Controller) beanFactory.getBean(beanClass);
+            Object controller = beanFactory.getBean(beanClass);
             Map<String, ControllerAndMethodMapping> ControllerAndMethodWithUrl = httpMethodResolver.resolve(requestUrl, controller);
             controllerAndMethodMappingMap.putAll(ControllerAndMethodWithUrl);
         }
         return controllerAndMethodMappingMap;
     }
 
-// 인터페이스의 구현체로 만드는 버전
-//    private static Map<String, Controller> createControllerMap(BeanFactory beanFactory, Set<Class<?>> classes) {
-//        Map<String, Controller> controllerMap = new HashMap<>();
-//        for (Class<?> beanClass : classes) {
-//            if (!Controller.class.isAssignableFrom(beanClass)) {
-//                continue;
-//            }
-//
-//            RequestMapping requestMapping = beanClass.getAnnotation(RequestMapping.class);
-//            if (requestMapping == null) {
-//                continue;
-//            }
-//
-//            Controller controller = (Controller) beanFactory.getBean(beanClass);
-//            //url이랑 컨트롤러 맵핑
-//            controllerMap.put(requestMapping.value(), controller);
-//        }
-//        return controllerMap;
-//    }
+    // 인터페이스의 구현체로 만드는 버전
+    private static Map<String, Controller> createControllerMap(BeanFactory beanFactory, Set<Class<?>> classes) {
+        Map<String, Controller> controllerMap = new HashMap<>();
+        for (Class<?> beanClass : classes) {
+            if (!Controller.class.isAssignableFrom(beanClass)) {
+                continue;
+            }
+
+            RequestMapping requestMapping = beanClass.getAnnotation(RequestMapping.class);
+            if (requestMapping == null) {
+                continue;
+            }
+
+            Controller controller = (Controller) beanFactory.getBean(beanClass);
+            //url이랑 컨트롤러 맵핑
+            controllerMap.put(requestMapping.value(), controller);
+        }
+        return controllerMap;
+    }
 }
