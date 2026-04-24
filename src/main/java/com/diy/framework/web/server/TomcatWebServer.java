@@ -1,6 +1,5 @@
 package com.diy.framework.web.server;
 
-import com.diy.framework.web.controller.Controller;
 import com.diy.framework.web.controller.DispatcherServlet;
 import org.apache.catalina.Context;
 import org.apache.catalina.LifecycleException;

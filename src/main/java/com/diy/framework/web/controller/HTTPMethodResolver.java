@@ -4,6 +4,7 @@ import com.diy.framework.annotation.DeleteMapping;
 import com.diy.framework.annotation.GetMapping;
 import com.diy.framework.annotation.PostMapping;
 import com.diy.framework.annotation.PutMapping;
+import com.diy.framework.web.controller.handler.HandlerMethod;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -16,8 +17,8 @@ public class HTTPMethodResolver {
     public static final String PUT = "PUT";
     public static final String DELETE = "DELETE";
 
-    public Map<String, ControllerAndMethodMapping> resolve(String baseUrl, Object controller) {
-        Map<String, ControllerAndMethodMapping> map = new HashMap<>();
+    public Map<String, HandlerMethod> resolve(String baseUrl, Object controller) {
+        Map<String, HandlerMethod> map = new HashMap<>();
 
         //이 컨트롤러 클래스의 메소드들
         Method[] declaredMethods = controller.getClass().getDeclaredMethods();
@@ -32,7 +33,7 @@ public class HTTPMethodResolver {
 
 
     //GET:/lectures -> ControllerAndMethodMapping(controller, method)
-    private void doGetMapping(String baseUrl, Object controller, Method declaredMethod, Map<String, ControllerAndMethodMapping> map) {
+    private void doGetMapping(String baseUrl, Object controller, Method declaredMethod, Map<String, HandlerMethod> map) {
         if (!declaredMethod.isAnnotationPresent(GetMapping.class)) {
             return;
 
@@ -40,37 +41,37 @@ public class HTTPMethodResolver {
         GetMapping getMapping = declaredMethod.getAnnotation(GetMapping.class);
         String path = getMapping.value();
         String url = baseUrl + path;
-        map.put(buildKey(GET, url), new ControllerAndMethodMapping(controller, declaredMethod));
+        map.put(buildKey(GET, url), new HandlerMethod(controller, declaredMethod));
     }
 
-    private void doPostMapping(String baseUrl, Object controller, Method declaredMethod, Map<String, ControllerAndMethodMapping> map) {
+    private void doPostMapping(String baseUrl, Object controller, Method declaredMethod, Map<String, HandlerMethod> map) {
         if (!declaredMethod.isAnnotationPresent(PostMapping.class)) {
             return;
         }
         PostMapping postMapping = declaredMethod.getAnnotation(PostMapping.class);
         String path = postMapping.value();
         String url = baseUrl + path;
-        map.put(buildKey(POST, url), new ControllerAndMethodMapping(controller, declaredMethod));
+        map.put(buildKey(POST, url), new HandlerMethod(controller, declaredMethod));
     }
 
-    private void doPutMapping(String baseUrl, Object controller, Method declaredMethod, Map<String, ControllerAndMethodMapping> map) {
+    private void doPutMapping(String baseUrl, Object controller, Method declaredMethod, Map<String, HandlerMethod> map) {
         if (!declaredMethod.isAnnotationPresent(PutMapping.class)) {
             return;
         }
         PutMapping putMapping = declaredMethod.getAnnotation(PutMapping.class);
         String path = putMapping.value();
         String url = baseUrl + path;
-        map.put(buildKey(PUT, url), new ControllerAndMethodMapping(controller, declaredMethod));
+        map.put(buildKey(PUT, url), new HandlerMethod(controller, declaredMethod));
     }
 
-    private void doDeleteMapping(String baseUrl, Object controller, Method declaredMethod, Map<String, ControllerAndMethodMapping> map) {
+    private void doDeleteMapping(String baseUrl, Object controller, Method declaredMethod, Map<String, HandlerMethod> map) {
         if (!declaredMethod.isAnnotationPresent(DeleteMapping.class)) {
             return;
         }
         DeleteMapping deleteMapping = declaredMethod.getAnnotation(DeleteMapping.class);
         String path = deleteMapping.value();
         String url = baseUrl + path;
-        map.put(buildKey(DELETE, url), new ControllerAndMethodMapping(controller, declaredMethod));
+        map.put(buildKey(DELETE, url), new HandlerMethod(controller, declaredMethod));
     }
 
     private String buildKey(String method, String path) {

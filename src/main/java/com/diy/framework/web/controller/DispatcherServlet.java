@@ -1,5 +1,7 @@
 package com.diy.framework.web.controller;
 
+import com.diy.framework.web.controller.handler.adapter.HandlerAdapter;
+import com.diy.framework.web.controller.handler.mapping.HandlerMapping;
 import com.diy.framework.web.view.*;
 
 import javax.servlet.ServletConfig;
@@ -10,20 +12,20 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 
 //@WebServlet("/") // 톰캣이 자동으로 인스턴스 생성, 외부 파라미터 주입 불가 함
 public class DispatcherServlet extends HttpServlet {
-    private final Map<String, ControllerAndMethodMapping> controllerAndMethodMap;
-    private final Map<String, Controller> controllerMap;
 
-    public DispatcherServlet(Map<String, ControllerAndMethodMapping> controllerAndMethodMap,
-                             Map<String, Controller> controllerMap) {
-        this.controllerAndMethodMap = controllerAndMethodMap;
-        this.controllerMap = controllerMap;
+    private final List<HandlerMapping> handlerMappings;
+    private final List<HandlerAdapter> handlerAdapters;
+
+    private final List<ViewResolver> viewResolvers = new ArrayList<>();
+
+    public DispatcherServlet(List<HandlerMapping> handlerMappings, List<HandlerAdapter> handlerAdapters) {
+        this.handlerMappings = handlerMappings;
+        this.handlerAdapters = handlerAdapters;
     }
-
-    private List<ViewResolver> viewResolvers = new ArrayList<>();
 
     @Override
     public void init(final ServletConfig config) throws ServletException {
@@ -39,34 +41,37 @@ public class DispatcherServlet extends HttpServlet {
     @Override
     protected void service(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
 
-        String methodAndURL = buildKey(req);
-        ControllerAndMethodMapping controllerAndMethodMapping = controllerAndMethodMap.get(methodAndURL);
-
         try {
-            if (controllerAndMethodMapping != null) {
-                // 애너테이션 기반 컨트롤러
-                Object result = controllerAndMethodMapping.invoke(req, resp);
-                if (result instanceof ModelAndView) {
-                    render(req, resp, (ModelAndView) result);
-                }
+            Object handler = getHandler(req);
+            if (handler == null) {
+                resp.sendError(404);
                 return;
             }
 
-            // 인터페이스 기반 컨트롤러
-            Controller controller = controllerMap.get(req.getRequestURI());
-            if (controller != null) {
-                ModelAndView modelAndView = controller.handleRequest(req, resp);
-                if (modelAndView != null) {
-                    render(req, resp, modelAndView);
-                }
-                return;
+            HandlerAdapter handlerAdapter = getHandlerAdapter(handler);
+            ModelAndView modelAndView = handlerAdapter.handle(handler, req, resp);
+            if (modelAndView != null) {
+                render(req, resp, modelAndView);
             }
-
-            resp.sendError(404);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
+    }
+
+    private Object getHandler(HttpServletRequest req) {
+        return handlerMappings.stream()
+                .map(mapping -> mapping.getHandler(req))
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private HandlerAdapter getHandlerAdapter(Object handler) {
+        return handlerAdapters.stream()
+                .filter(adapter -> adapter.supports(handler))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("지원하지 않는 핸들러: " + handler));
     }
 
     private void render(HttpServletRequest req, HttpServletResponse resp, ModelAndView modelAndView) throws Exception {
@@ -79,7 +84,4 @@ public class DispatcherServlet extends HttpServlet {
         }
     }
 
-    private String buildKey(HttpServletRequest request) {
-        return String.format("%s:%s", request.getMethod(), request.getRequestURI());
-    }
 }
